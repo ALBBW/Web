@@ -9,6 +9,7 @@
 *
 */
 	require("scripts/php/marmalo.php");
+	$dt = new date_time();
 	session_start();													//Session wird Gestartet
 	if($_SESSION["login"] == "")										//Falls Session Variable login leer
 	{
@@ -142,13 +143,27 @@
 			echo("<select name='monat' id='monthselect'>");
 			for($i = 1; $i < 13; $i++)
 			{
-				echo("<option>" . $contro->getMonth($i) . "</option>");
+				if($i == $dt->get_month())
+				{
+					echo("<option selected='selected'>" . $contro->getMonth($i) . "</option>");
+				}
+				else
+				{
+					echo("<option>" . $contro->getMonth($i) . "</option>");
+				}
 			}
 			echo("</select>");
 			echo("<select name='yearselect' id='yearselect'>");
 			for($i = 2018; $i < 2038; $i++)							
 			{
-				echo("<option>" . $i . "</option>");
+				if($i == $dt->get_year())
+				{
+					echo("<option selected='Selected'>" . $i . "</option>");
+				}
+				else
+				{
+					echo("<option>" . $i . "</option>");
+				}
 			}
 			echo("</select>");
 			echo("<input type='submit' name='change_Calendar' id='ccbtn' value='Aktualisieren'>");
@@ -234,7 +249,6 @@
 		<hr>
 		<div id="remline">
 		<?php
-			$dt = new date_time();
 			$datenow = $dt->get_day() . "." . $dt->get_month() . "." . $dt->get_year();
 			$conn = mysqli_connect($conndata["server"], $conndata["admin"], $conndata["pass"], $conndata["db"]);
 			$sql = "SELECT * FROM termine WHERE datum='" . $datenow . "'";
