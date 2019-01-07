@@ -8,6 +8,7 @@
 *					die Automatisch alle Fehlzeiten im Monat Addiert
 *
 */
+	require("scripts/php/marmalo.php");
 	session_start();													//Session wird Gestartet
 	if($_SESSION["login"] == "")										//Falls Session Variable login leer
 	{
@@ -29,7 +30,7 @@
 	$selected_user = $_SESSION["selusr"];								//Übergabe des Session Wertes für Ausgewählten TN an die Variable
 	if(isset($_POST["change_Calendar"]))								//Wenn Kalendar aktuallisiert
 	{
-		$monat = $contro->GetMonthNum($_POST["monat"]);					//Hole nummer des Monats (Jannuar = 1)
+		$monat = $contro->GetMonthNum($_POST["monat"]);					//Hole Nummer des Monats (Jannuar = 1)
 		$_SESSION["monat"] = $monat;									//Speichere Monat nummer in Session Variable
 		$_SESSION["jahr"] = $_POST["yearselect"];						//Speichere Gewähltes Jahr in Session Variable
 		$year = $_SESSION["jahr"];										//Übergebe Session Jahr an year Variable
@@ -80,6 +81,28 @@
 		$gruppe = $_POST["ausgr"];												//Ausbildungsgruppe wird an Variable übergeben
 		$newtnrfidcode = $_POST["rfidnewtn"];									//RFID Code wird an Variable übergeben
 		$contro->CreateNewTN($vorname, $nachname, $gruppe, $newtnrfidcode);		//Rufe CreateNewTN Methode auf und übergebe alle variablen
+	}
+	
+	if(isset($_POST["addTermin"]))
+	{
+		$header = $_POST["termheader"];
+		$content = $_POST["content"];
+		$hour = $_POST["termhour"];
+		$minute = $_POST["termminute"];
+		$user = $_POST["user"];
+		$date = $_POST["date"];
+		$termtime = $hour . ":" . $minute;
+		$conn = mysqli_connect($conndata["server"], $conndata["admin"], $conndata["pass"], $conndata["db"]);
+		$checkSQL = "SELECT * FROM termine WHERE tn_id='" . $user . "' AND betreff='" . $header . "' AND nachricht='" . $content . "' AND datum='" . $date . "' AND zeit='" . $termtime . "'";
+		echo($checkSQL);
+		$checkQuery = mysqli_query($conn, $checkSQL);
+		echo(var_dump($checkQuery));
+		$ifexistent = mysqli_num_rows($checkQuery);
+		if($ifexistent == 0)
+		{
+			$sql = "INSERT INTO termine (tn_id, betreff, nachricht, datum, zeit) VALUES ('" . $user . "', '" . $header . "','" . $content . "','0" . $date ."', '" . $termtime . "')";
+			$query = mysqli_query($conn, $sql);
+		}
 	}
 	
 	
@@ -155,6 +178,7 @@
 					$query = mysqli_query($conn, $sql);
 					$result = mysqli_fetch_assoc($query);
 					$dayname =  $contro->Translator(date("l", mktime(0,0,0,$monat,$j,$year)));
+					echo("<div id='test'>");
 					if(($dayname == "Samstag") || ($dayname == "Sonntag"))
 					{
 						echo("<input type='submit' name='daybtn" . $j . "' value='" . $j ."' class='dcalendarnone' title='" . $dayname . ": Wochenende'>");
@@ -175,8 +199,9 @@
 					}
 					else
 					{
-						echo("<input type='submit' name='daybtn" . $j . "' value='" . $j ."' class='dcalendarnormal' title='" . $dayname . "'>");
+						echo("<input type='submit' name='daybtn" . $j . "' value='" . $j . "' class='dcalendarnormal' title='" . $dayname . "'>");
 					}
+					echo("<input type='submit' name='dayaddcal" . $j . "' value='+' class='addTerminbtn' title='Termin hinzufügen'></div>");
 					$j++;
 				}
 				mysqli_close($conn);
@@ -204,7 +229,26 @@
 			</tr>
 		</table>
 	</div>
+	<div id="rembar">
+		<h2 style="text-align: center;">Heutige Erinnerungen</h2>
+		<hr>
+		<div id="remline">
+		<?php
+			$dt = new date_time();
+			$datenow = $dt->get_day() . "." . $dt->get_month() . "." . $dt->get_year();
+			$conn = mysqli_connect($conndata["server"], $conndata["admin"], $conndata["pass"], $conndata["db"]);
+			$sql = "SELECT * FROM termine WHERE datum='" . $datenow . "'";
+			$query = mysqli_query($conn, $sql);
+			while($rows = mysqli_fetch_assoc($query))
+			{	
+				echo("<p style='cursor: help;' title='" . $rows["nachricht"] . "'><u>" . $contro->GetTN($rows["tn_id"]) . " - " . $rows["betreff"] . " (" . $rows["zeit"] . ") Uhr</u></p>");
+			}
+		?>
+		</div>
+	</div>
 	<?php
+	echo("</div>");
+	echo("</div>");
 	}
 		if(isset($_POST["newtn"]))
 		{
@@ -355,6 +399,104 @@
 				$contro->GetDay($tnid, "31", $monat, $year);
 				break;
 		}
+		
+		switch(true)											//Analyse per Switch welcher Tag angeklickt wurde
+		{
+			case isset($_POST["dayaddcal1"]): 
+				$contro->addTermin($tnid, "1", $monat, $year);		//Methodenaufruf und übergabe der Parameter für den gewählten Tag
+				break;
+			case isset($_POST["dayaddcal2"]):
+				$contro->addTermin($tnid, "2", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal3"]):
+				$contro->addTermin($tnid, "3", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal4"]):
+				$contro->addTermin($tnid, "4", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal5"]):
+				$contro->addTermin($tnid, "5", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal6"]):
+				$contro->addTermin($tnid, "6", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal7"]):
+				$contro->addTermin($tnid, "7", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal8"]):
+				$contro->addTermin($tnid, "8", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal9"]):
+				$contro->addTermin($tnid, "9", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal10"]):
+				$contro->addTermin($tnid, "10", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal11"]):
+				$contro->addTermin($tnid, "11", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal12"]):
+				$contro->addTermin($tnid, "12", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal13"]):
+				$contro->addTermin($tnid, "13", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal14"]):
+				$contro->addTermin($tnid, "14", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal15"]):
+				$contro->addTermin($tnid, "15", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal16"]):
+				$contro->addTermin($tnid, "16", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal17"]):
+				$contro->addTermin($tnid, "17", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal18"]):
+				$contro->addTermin($tnid, "18", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal19"]):
+				$contro->addTermin($tnid, "19", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal20"]):
+				$contro->addTermin($tnid, "20", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal21"]):
+				$contro->addTermin($tnid, "21", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal22"]):
+				$contro->addTermin($tnid, "22", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal23"]):
+				$contro->addTermin($tnid, "23", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal24"]):
+				$contro->addTermin($tnid, "24", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal25"]):
+				$contro->addTermin($tnid, "25", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal26"]):
+				$contro->addTermin($tnid, "26", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal27"]):
+				$contro->addTermin($tnid, "27", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal28"]):
+				$contro->addTermin($tnid, "28", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal29"]):
+				$contro->addTermin($tnid, "29", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal30"]):
+				$contro->addTermin($tnid, "30", $monat, $year);
+				break;
+			case isset($_POST["dayaddcal31"]):
+				$contro->addTermin($tnid, "31", $monat, $year);
+				break;
+		}
 	?>
+});
 </body>
 </html>
